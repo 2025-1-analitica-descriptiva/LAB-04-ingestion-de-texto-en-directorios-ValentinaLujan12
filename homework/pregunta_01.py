@@ -5,6 +5,9 @@
 Escriba el codigo que ejecute la accion solicitada en cada pregunta.
 """
 
+import os
+import zipfile
+import pandas as pd
 
 def pregunta_01():
     """
@@ -71,3 +74,42 @@ def pregunta_01():
 
 
     """
+    zip_path = "files/input.zip"
+    output_path = "files/output"
+
+    # Descomprimir directamente en la raíz del repositorio
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(".")
+
+    # Crear la carpeta de salida si no existe
+    os.makedirs(output_path, exist_ok=True)
+
+    def procesar_dataset(nombre_carpeta):
+        """
+        Procesa los datos de una carpeta (train o test) y retorna un DataFrame.
+        """
+        data = []
+        base_path = os.path.join("input", nombre_carpeta)
+        for sentimiento in ['positive', 'negative', 'neutral']:
+            carpeta_sentimiento = os.path.join(base_path, sentimiento)
+            if not os.path.exists(carpeta_sentimiento):
+                continue
+            for archivo in os.listdir(carpeta_sentimiento):
+                archivo_path = os.path.join(carpeta_sentimiento, archivo)
+                with open(archivo_path, encoding="utf-8") as f:
+                    frase = f.read().strip()
+                    data.append({
+                        "phrase": frase,
+                        "target": sentimiento
+                    })
+        return pd.DataFrame(data)
+
+    # Procesar y guardar los datasets
+    df_train = procesar_dataset("train")
+    df_test = procesar_dataset("test")
+
+    df_train.to_csv(os.path.join(output_path, "train_dataset.csv"), index=False)
+    df_test.to_csv(os.path.join(output_path, "test_dataset.csv"), index=False)
+
+if __name__ == "__main__":
+    pregunta_01()
